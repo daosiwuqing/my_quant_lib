@@ -1,29 +1,26 @@
-﻿# 该项目的作用: 构建南华综合指数 (当日判定是否展期，并在收盘时展期)
+﻿# 该项目的功能: 构建南华综合指数 (当日判定是否展期，并在收盘时展期)
 import pandas as pd
 import zipfile as zp
 import datetime as dt
 import io, csv
 
-import sys
-
-sys.path.append("D:\\LearningAndWorking\\VSCode\\python\\module\\")
-from package1 import Cal_index1 as ci
+import my_quant_lib as MQL
 
 
-def get_market_data1(index_name, weight_date_list):
+def get_market_data1(index_name: str, weight_date_list: list) -> pd.DataFrame:
     """
     功能: 获取所用品种的所有日频行情数据
 
     参数:
-        index_name(str): 指数名称
-        weight_date_list(list): 回测涉及到的权重调整日期
+        index_name: 指数名称
+        weight_date_list: 回测涉及到的权重调整日期
 
     返回:
-        df(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的数据
+        pd.DataFrame: 含有calender_day, instrument_id, close, volume, open_interest等列的数据
     """
     codes_list = []
     for weight_date in weight_date_list[:-1]:
-        weight = ci.get_weight(index_name, weight_date)
+        weight = MQL.Cal_index1.get_weight(index_name, weight_date)
         codes_list.extend(list(weight.index))
 
     df = pd.read_csv(
@@ -42,21 +39,23 @@ def get_market_data1(index_name, weight_date_list):
     return result
 
 
-def get_market_data2(index_name, weight_date_list, time):
+def get_market_data2(
+    index_name: str, weight_date_list: list, time: str
+) -> pd.DataFrame:
     """
     功能: 获取所用品种的所有分钟级行情数据
 
     参数:
-        index_name(str): 指数名称
-        weight_date_list(list): 回测涉及到的权重调整日期
-        time(str): 时间点，格式为'HH:MM:SS'
+        index_name: 指数名称
+        weight_date_list: 回测涉及到的权重调整日期
+        time: 时间点，格式为'HH:MM:SS'
 
     返回:
-        df(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的数据
+        pd.DataFrame: 含有calender_day, instrument_id, close, volume, open_interest等列的数据
     """
     codes_list = []
     for weight_date in weight_date_list[:-1]:
-        weight = ci.get_weight(index_name, weight_date)
+        weight = MQL.Cal_index1.get_weight(index_name, weight_date)
         codes_list.extend(list(weight.index))
 
     result_list = []
@@ -76,24 +75,31 @@ def get_market_data2(index_name, weight_date_list, time):
     return result
 
 
-def calculate_function1(df1, df2, df3, weights, date, path):
+def calculate_function1(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    df3: pd.DataFrame,
+    weights: pd.Series,
+    date: str,
+    path: str,
+):
     """
     功能: 计算第一个交易日的指数
 
     参数:
-        df1(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
-        df2(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
-        df3(pd.DataFrame): 含有date, code, main_contract, main_contract_price, roll_state, second_contract, second_contract_price, largest_open_interest_contract, return, index等列的历史指数数据
-        weights(pd.Series): 权重信息
-        date(str): 日期，格式为'YYYY-MM-DD'
-        path(str): 数据输出路径
+        df1: 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
+        df2: 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
+        df3: 含有date, code, main_contract, main_contract_price, roll_state, second_contract, second_contract_price, largest_open_interest_contract, return, index等列的历史指数数据
+        weights: 权重信息
+        date: 日期，格式为'YYYY-MM-DD'
+        path: 数据输出路径
 
     返回:
         df2(pd.DataFrame): 更新后的历史行情数据
         df3(pd.DataFrame): 更新后的历史指数数据
     """
     # 纳入指数计算的品种的基本信息
-    df4 = ci.add_contract_info(weights)
+    df4 = MQL.Cal_index1.add_contract_info(weights)
     df4.columns = ["weight", "scale", "margin_ratio"]
 
     # 更新指数信息
@@ -162,24 +168,31 @@ def calculate_function1(df1, df2, df3, weights, date, path):
     return df2, df3
 
 
-def calculate_function2(df1, df2, df3, weights, date, path):
+def calculate_function2(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    df3: pd.DataFrame,
+    weights: pd.Series,
+    date: str,
+    path: str,
+):
     """
     功能: 计算第二, 三个交易日的指数
 
     参数:
-        df1(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
-        df2(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
-        df3(pd.DataFrame): 含有date, code, main_contract, main_contract_price, roll_state, second_contract, second_contract_price, largest_open_interest_contract, return, index等列的历史指数数据
-        weights(pd.DataFrame): 权重信息
-        date(str): 日期，格式为'YYYY-MM-DD'
-        path(str): 数据输出路径
+        df1: 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
+        df2: 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
+        df3: 含有date, code, main_contract, main_contract_price, roll_state, second_contract, second_contract_price, largest_open_interest_contract, return, index等列的历史指数数据
+        weights: 权重信息
+        date: 日期，格式为'YYYY-MM-DD'
+        path: 数据输出路径
 
     返回:
         df2(pd.DataFrame): 更新后的历史行情数据
         df3(pd.DataFrame): 更新后的历史指数数据
     """
     # 纳入指数计算的品种的基本信息
-    df4 = ci.add_contract_info(weights)
+    df4 = MQL.Cal_index1.add_contract_info(weights)
     df4.columns = ["weight", "scale", "margin_ratio"]
 
     # 更新指数信息
@@ -262,24 +275,32 @@ def calculate_function2(df1, df2, df3, weights, date, path):
     return df2, df3
 
 
-def calculate_weight_constant_function(df, df1, df2, df3, weights, date, path):
+def calculate_weight_constant_function(
+    df: pd.DataFrame,
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    df3: pd.DataFrame,
+    weights: pd.DataFrame,
+    date: str,
+    path: str,
+):
     """
     功能: 计算非权重调整日的指数
 
     参数:
-        df1(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
-        df2(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
-        df3(pd.DataFrame): 含有date, code, main_contract, main_contract_price, roll_state, second_contract, second_contract_price, largest_open_interest_contract, return, index等列的历史指数数据
-        weights(pd.DataFrame): 权重信息
-        date(str): 日期，格式为'YYYY-MM-DD'
-        path(str): 数据输出路径
+        df1: 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
+        df2: 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
+        df3: 含有date, code, main_contract, main_contract_price, roll_state, second_contract, second_contract_price, largest_open_interest_contract, return, index等列的历史指数数据
+        weights: 权重信息
+        date: 日期，格式为'YYYY-MM-DD'
+        path): 数据输出路径
 
     返回:
         df2(pd.DataFrame): 更新后的历史行情数据
         df3(pd.DataFrame): 更新后的历史指数数据
     """
     # 纳入指数计算的品种的基本信息
-    df4 = ci.add_contract_info(weights)
+    df4 = MQL.Cal_index1.add_contract_info(weights)
     df4.columns = ["weight", "scale", "margin_ratio"]
 
     # 更新指数信息
@@ -321,9 +342,9 @@ def calculate_weight_constant_function(df, df1, df2, df3, weights, date, path):
             largest_open_interest_contract = df5["instrument_id"].values[
                 0
             ]  # 持仓量最大的合约
-            roll_condition = ci.cal_date_spread(
+            roll_condition = MQL.Cal_index1.cal_date_spread(
                 pd.Timestamp(date),
-                ci.get_maturity_date(main_contract, pd.Timestamp(date)),
+                MQL.Cal_index1.get_maturity_date(main_contract, pd.Timestamp(date)),
                 pd.to_datetime(sorted(set(df["calender_day"]))),
             )
             if (roll_condition["months_remaining"] <= 2) & (
@@ -333,8 +354,10 @@ def calculate_weight_constant_function(df, df1, df2, df3, weights, date, path):
                     df5["instrument_id"].apply(
                         lambda x: (
                             True
-                            if ci.get_maturity_date(x, pd.Timestamp(date))
-                            > ci.get_maturity_date(main_contract, pd.Timestamp(date))
+                            if MQL.Cal_index1.get_maturity_date(x, pd.Timestamp(date))
+                            > MQL.Cal_index1.get_maturity_date(
+                                main_contract, pd.Timestamp(date)
+                            )
                             else False
                         )
                     )
@@ -350,10 +373,12 @@ def calculate_weight_constant_function(df, df1, df2, df3, weights, date, path):
                         ]
                     )
                 ) == 1 & (
-                    ci.get_maturity_date(
+                    MQL.Cal_index1.get_maturity_date(
                         largest_open_interest_contract, pd.Timestamp(date)
                     )
-                    > ci.get_maturity_date(main_contract, pd.Timestamp(date))
+                    > MQL.Cal_index1.get_maturity_date(
+                        main_contract, pd.Timestamp(date)
+                    )
                 ):  # 如果最大持仓量的合约连续三天是同一合约且最大持仓量的合约比主力合约更晚到期
                     roll_state = 1  # 展期状态
                     second_contract = pre_largest_open_interest_contract
@@ -574,24 +599,32 @@ def calculate_weight_constant_function(df, df1, df2, df3, weights, date, path):
     return df2, df3
 
 
-def calculate_weight_change_function(df, df1, df2, df3, weights, date, path):
+def calculate_weight_change_function(
+    df: pd.DataFrame,
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    df3: pd.DataFrame,
+    weights: pd.DataFrame,
+    date: str,
+    path: str,
+):
     """
     功能: 计算权重调整日的指数
 
     参数:
-        df1(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
-        df2(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
-        df3(pd.DataFrame): 含有date, code, main_contract, main_contract_price, roll_state, second_contract, second_contract_price, largest_open_interest_contract, return, index等列的历史指数数据
-        weights(pd.DataFrame): 权重信息
-        date(str): 日期，格式为'YYYY-MM-DD'
-        path(str): 数据输出路径
+        df1: 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
+        df2: 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
+        df3: 含有date, code, main_contract, main_contract_price, roll_state, second_contract, second_contract_price, largest_open_interest_contract, return, index等列的历史指数数据
+        weights: 权重信息
+        date: 日期，格式为'YYYY-MM-DD'
+        path: 数据输出路径
 
     返回:
         df2(pd.DataFrame): 更新后的历史行情数据
         df3(pd.DataFrame): 更新后的历史指数数据
     """
     # 纳入指数计算的品种的基本信息
-    df4 = ci.add_contract_info(weights)
+    df4 = MQL.Cal_index1.add_contract_info(weights)
     df4.columns = ["weight", "scale", "margin_ratio"]
 
     # 更新指数信息
@@ -672,17 +705,14 @@ def calculate_weight_change_function(df, df1, df2, df3, weights, date, path):
     return df2, df3
 
 
-def main(index_name, weight_date_list, path):
+def main(index_name: str, weight_date_list: list, path: str):
     """
     功能: 主函数，执行指数计算
 
     参数:
-        index_name(str): 指数名称
-        weight_date_list(list): 回测涉及到的权重调整日期
-        path(str): 数据输出路径
-
-    返回:
-        None
+        index_name: 指数名称
+        weight_date_list: 回测涉及到的权重调整日期
+        path: 数据输出路径
     """
     df = get_market_data1(index_name, weight_date_list)  # 获取所用合约的所有行情数据
     date_list = sorted(
@@ -692,7 +722,7 @@ def main(index_name, weight_date_list, path):
     # 初始化部分参数并计算前三个交易日的账户净值
     df2 = pd.DataFrame()
     df3 = pd.DataFrame()
-    weight = ci.get_weight(index_name, weight_date_list[0])
+    weight = MQL.Cal_index1.get_weight(index_name, weight_date_list[0])
     df2, df3 = calculate_function1(
         df[df.calender_day == date_list[0]], df2, df3, weight, date_list[0], path
     )
@@ -711,7 +741,9 @@ def main(index_name, weight_date_list, path):
         ) >= dt.datetime.strptime(
             weight_date_list[n1], "%Y-%m"
         ):  # 判断是否需要调整权重
-            weight = ci.get_weight(index_name, weight_date_list[n1])  # 更新权重信息
+            weight = MQL.Cal_index1.get_weight(
+                index_name, weight_date_list[n1]
+            )  # 更新权重信息
             df2, df3 = calculate_weight_change_function(
                 df, df1, df2, df3, weight, date1, path
             )

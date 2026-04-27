@@ -1,23 +1,20 @@
-﻿# 该项目的作用: 测试实际投资中跟踪南华单品种指数时的偏离度 保证金占用情况 (当日判定是否展期, 并在收盘时展期)
+﻿# 该项目的功能: 测试实际投资中跟踪南华单品种指数时的偏离度 保证金占用情况 (当日判定是否展期, 并在收盘时展期)
 import pandas as pd
 import zipfile as zp
 import io, csv
 
-import sys
-
-sys.path.append("D:\\LearningAndWorking\\VSCode\\python\\module\\")
-from package1 import Cal_index1 as ci
+import my_quant_lib as MQL
 
 
-def get_market_data1(code):
+def get_market_data1(code: str) -> pd.DataFrame:
     """
     功能: 获取指定品种的日频行情数据
 
     参数:
-        code(str): 期货合约代码
+        code: 期货合约代码
 
     返回:
-        df(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的日频行情数据
+        pd.DataFrame: 含有calender_day, instrument_id, close, volume, open_interest等列的日频行情数据
     """
     df = pd.read_csv(
         "D:\\LearningAndWorking\\VSCode\\data\\csv\\chinese_commodity_future_trading_data(2024年及以前).csv"
@@ -30,16 +27,16 @@ def get_market_data1(code):
     return df
 
 
-def get_market_data2(code, time):
+def get_market_data2(code: str, time: str) -> pd.DataFrame:
     """
     功能: 获取指定品种在指定时间点的分钟级行情数据
 
     参数:
-        code(str): 期货合约代码
-        time(str): 时间点, 格式为'15:00:00'
+        code: 期货合约代码
+        time: 时间点, 格式为'15:00:00'
 
     返回:
-        df(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的分钟级行情数据
+        pd.DataFrame: 含有calender_day, instrument_id, close, volume, open_interest等列的分钟级行情数据
     """
     with zp.ZipFile(
         "D:\\LearningAndWorking\\VSCode\\data\\csv\\全部期货合约一分钟级数据（23_12_21-24_08_28）.zip"
@@ -54,19 +51,28 @@ def get_market_data2(code, time):
     return df
 
 
-def roll_calculate_function(df1, df2, df3, date, path, margin_ratio, fee, scale):
+def roll_calculate_function(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    df3: pd.DataFrame,
+    date: str,
+    path: str,
+    margin_ratio: float,
+    fee: float,
+    scale: int,
+):
     """
     功能: 进行展期运算
 
     参数:
-        df1(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
-        df2(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
-        df3(pd.DataFrame): 含有date, main_contract, main_contract_price, open_interest1, roll_state, second_contract, second_contract_price, open_interest2, largest_open_interest_contract, margin, trading_fee, net_value等列的历史净值数据
-        date(str): 日期
-        path(str): 数据输出路径
-        margin_ratio(float): 保证金比例
-        fee(float): 交易费用
-        scale(int): 合约规模
+        df1: 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
+        df2: 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
+        df3: 含有date, main_contract, main_contract_price, open_interest1, roll_state, second_contract, second_contract_price, open_interest2, largest_open_interest_contract, margin, trading_fee, net_value等列的历史净值数据
+        date: 日期
+        path: 数据输出路径
+        margin_ratio: 保证金比例
+        fee: 交易费用
+        scale: 合约规模
 
     返回:
         df2(pd.DataFrame): 更新后的历史行情数据
@@ -89,8 +95,10 @@ def roll_calculate_function(df1, df2, df3, date, path, margin_ratio, fee, scale)
             df1["instrument_id"].apply(
                 lambda x: (
                     True
-                    if ci.get_maturity_date(x, pd.Timestamp(date))
-                    > ci.get_maturity_date(main_contract, pd.Timestamp(date))
+                    if MQL.OtherTools.get_maturity_date(x, pd.Timestamp(date))
+                    > MQL.OtherTools.get_maturity_date(
+                        main_contract, pd.Timestamp(date)
+                    )
                     else False
                 )
             )
@@ -384,19 +392,28 @@ def roll_calculate_function(df1, df2, df3, date, path, margin_ratio, fee, scale)
     return df2, df3
 
 
-def normal_calculate_function(df1, df2, df3, date, path, margin_ratio, fee, scale):
+def normal_calculate_function(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    df3: pd.DataFrame,
+    date: str,
+    path: str,
+    margin_ratio: float,
+    fee: float,
+    scale: int,
+):
     """
     功能: 进行正常计算运算
 
     参数:
-        df1(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
-        df2(pd.DataFrame): 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
-        df3(pd.DataFrame): 含有date, main_contract, main_contract_price, open_interest1, roll_state, second_contract, second_contract_price, open_interest2, largest_open_interest_contract, margin, trading_fee, net_value等列的历史净值数据
-        date(str): 日期
-        path(str): 数据输出路径
-        margin_ratio(float): 保证金比例
-        fee(float): 交易费用
-        scale(int): 合约规模
+        df1: 含有calender_day, instrument_id, close, volume, open_interest等列的当前行情数据
+        df2: 含有calender_day, instrument_id, close, volume, open_interest等列的历史行情数据
+        df3: 含有date, main_contract, main_contract_price, open_interest1, roll_state, second_contract, second_contract_price, open_interest2, largest_open_interest_contract, margin, trading_fee, net_value等列的历史净值数据
+        date: 日期
+        path: 数据输出路径
+        margin_ratio: 保证金比例
+        fee: 交易费用
+        scale: 合约规模
 
     返回:
         df2(pd.DataFrame): 更新后的历史行情数据
@@ -492,21 +509,26 @@ def normal_calculate_function(df1, df2, df3, date, path, margin_ratio, fee, scal
     return df2, df3
 
 
-def main(code, path, time, account, margin_ratio, fee, scale):
+def main(
+    code: str,
+    path: str,
+    time: str,
+    account: float,
+    margin_ratio: float,
+    fee: float,
+    scale: int,
+):
     """
     功能: 主函数
 
     参数:
-        code(str): 期货品种代码
-        path(str): 数据输出路径
-        time(str): 某个时间点的收盘价, 格式为'14:45:00'
-        account(float): 初始账户资金
-        margin_ratio(float): 保证金比例
-        fee(float): 交易费用
-        scale(int): 合约规模
-
-    返回:
-        None
+        code: 期货品种代码
+        path: 数据输出路径
+        time: 某个时间点的收盘价, 格式为'14:45:00'
+        account: 初始账户资金
+        margin_ratio: 保证金比例
+        fee: 交易费用
+        scale: 合约规模
     """
     df = get_market_data2(code, time)
 
@@ -706,9 +728,9 @@ def main(code, path, time, account, margin_ratio, fee, scale):
             largest_open_interest_contract = df3[
                 "largest_open_interest_contract"
             ].values[-1]
-            roll_condition = ci.cal_date_spread(
+            roll_condition = MQL.OtherTools.cal_date_spread(
                 pd.Timestamp(date1),
-                ci.get_maturity_date(main_contract, pd.Timestamp(date1)),
+                MQL.OtherTools.get_maturity_date(main_contract, pd.Timestamp(date1)),
                 pd.to_datetime(sorted(set(df["calender_day"]))),
             )
             if (
@@ -726,10 +748,12 @@ def main(code, path, time, account, margin_ratio, fee, scale):
                     & (len(set(df3.tail(3)["largest_open_interest_contract"])) == 1)
                     & (main_contract != largest_open_interest_contract)
                     & (
-                        ci.get_maturity_date(
+                        MQL.OtherTools.get_maturity_date(
                             largest_open_interest_contract, pd.Timestamp(date1)
                         )
-                        > ci.get_maturity_date(main_contract, pd.Timestamp(date1))
+                        > MQL.OtherTools.get_maturity_date(
+                            main_contract, pd.Timestamp(date1)
+                        )
                     )
                 ):
                     # 当前展期状态为0, 连续三天最大持仓合约是同一合约且不是主力合约, 主力合约比持仓量最大的合约到期日近
