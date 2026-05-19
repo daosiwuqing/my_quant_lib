@@ -15,7 +15,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
-from package.MyTT import *
+import package.MyTT as MyTT
 import my_quant_lib as MQL
 
 # 设置全局字体
@@ -134,11 +134,11 @@ for key, value in filtered_dict.items():
     df3_1 = MQL.StaticTickToK.tick_to_K(df2_2, "15min")
     df3_1 = df3_1.reset_index()
 
-    df3_1["ma5"] = MA(df3_1["close"], 5)
-    df3_1["ma10"] = MA(df3_1["close"], 10)
-    df3_1["ma20"] = MA(df3_1["close"], 20)
-    df3_1["ma40"] = MA(df3_1["close"], 40)
-    df3_1["ma60"] = MA(df3_1["close"], 60)
+    df3_1["ma5"] = MyTT.MA(df3_1["close"], 5)
+    df3_1["ma10"] = MyTT.MA(df3_1["close"], 10)
+    df3_1["ma20"] = MyTT.MA(df3_1["close"], 20)
+    df3_1["ma40"] = MyTT.MA(df3_1["close"], 40)
+    df3_1["ma60"] = MyTT.MA(df3_1["close"], 60)
 
     df3_1["local_min"] = (
         df3_1["low"]
@@ -213,9 +213,9 @@ for key, value in filtered_dict.items():
             spread_list.append(spread)
     df3_1["spread"] = spread_list
 
-    df3_1["atr"] = ATR(df3_1["close"], df3_1["high"], df3_1["low"], 13)
+    df3_1["atr"] = MyTT.ATR(df3_1["close"], df3_1["high"], df3_1["low"], 13)
 
-    df3_1["rsi"] = RSI(df3_1["close"], 13)
+    df3_1["rsi"] = MyTT.RSI(df3_1["close"], 13)
     df3_1["rsi_0.05_percentile"] = (
         df3_1["rsi"]
         .expanding()

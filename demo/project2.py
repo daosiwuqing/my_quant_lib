@@ -15,7 +15,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
-from package.MyTT import *
+import package.MyTT as MyTT
 import my_quant_lib as MQL
 
 # 设置全局字体
@@ -133,7 +133,7 @@ for key, value in filtered_dict.items():
     # 处理高频数据
     df3_1 = MQL.StaticTickToK.tick_to_K(df2_2, "5min")
 
-    df3_1["rsi"] = RSI(df3_1["close"], 20)
+    df3_1["rsi"] = MyTT.RSI(df3_1["close"], 20)
     df3_1["rsi_0.05_percentile"] = (
         df3_1["rsi"]
         .expanding()
@@ -165,8 +165,8 @@ for key, value in filtered_dict.items():
     # 处理中频数据
     df3_2 = MQL.StaticTickToK.tick_to_K(df2_2, "1h")
 
-    df3_2["ma20"] = MA(df3_2["close"], 20)
-    df3_2["ma60"] = MA(df3_2["close"], 60)
+    df3_2["ma20"] = MyTT.MA(df3_2["close"], 20)
+    df3_2["ma60"] = MyTT.MA(df3_2["close"], 60)
 
     df3_2.loc[df3_2["ma20"] > df3_2["ma60"], "trade_signal"] = 1
     # df3_2.loc[df3_2["ma20"] < df3_2["ma60"], "trade_signal"] = 1
@@ -189,8 +189,8 @@ for key, value in filtered_dict.items():
     # 处理低频数据
     df3_3 = MQL.StaticTickToK.tick_to_K(df2_2, "1D")
 
-    df3_3["ma5"] = MA(df3_3["close"], 5)
-    df3_3["ma20"] = MA(df3_3["close"], 20)
+    df3_3["ma5"] = MyTT.MA(df3_3["close"], 5)
+    df3_3["ma20"] = MyTT.MA(df3_3["close"], 20)
 
     df3_3.loc[df3_3["ma5"] > df3_3["ma20"], "trade_signal"] = 1
     # df3_3.loc[df3_3["ma5"] < df3_3["ma20"], "trade_signal"] = 1
